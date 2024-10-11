@@ -9,29 +9,46 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using AForge.Video;
 using AForge.Video.DirectShow;
+using NAudio.Wave;
 
 namespace Network_Project
 {
     public partial class Server_Form : Form
     {
+        private UdpClient udpAudioServer;
+        private WaveInEvent waveIn;
+        private IPEndPoint clientAudioEndPoint;
         private FilterInfoCollection videoDevices;
         private VideoCaptureDevice videoSource;
         private UdpClient udpServer;
         private IPEndPoint clientEndPoint;
         public Server_Form()
         {
+            IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
+            IPAddress localAddress = addresses.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
             InitializeComponent();
             udpServer = new UdpClient();
-            clientEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5000);
+            udpAudioServer = new UdpClient();
+            clientEndPoint = new IPEndPoint(localAddress, 5000);
+            clientAudioEndPoint = new IPEndPoint(localAddress, 5001);
+
+            Console.WriteLine(localAddress.ToString());
         }
 
         private void start_streaming_btn_Click(object sender, EventArgs e)
         {
+            waveIn = new WaveInEvent();
+            waveIn.WaveFormat = new WaveFormat(44100, 1);
+            waveIn.DataAvailable += WaveIn_DataAvailable;
+            waveIn.StartRecording();
+
+
             videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
             if (videoDevices.Count > 0)
             {
@@ -44,6 +61,14 @@ namespace Network_Project
                 MessageBox.Show("Không tìm thấy camera.");
             }
         }
+
+        private void WaveIn_DataAvailable(object sender, WaveInEventArgs e)
+        {
+            byte[] audioData = e.Buffer;
+
+            udpAudioServer.Send(audioData, audioData.Length, clientAudioEndPoint);
+        }
+
 
         private void videoSource_NewFrame(object sender, NewFrameEventArgs e)
         {
@@ -74,11 +99,32 @@ namespace Network_Project
 
         private void FormServer_FormClosing(object sender, FormClosingEventArgs e)
         {
+
+            //Stop Video
             if(videoSource != null && videoSource.IsRunning)
             {
                 videoSource.SignalToStop();
                 videoSource.WaitForStop();
             }
+
+            //Stop audio
+            if(waveIn != null)
+            {
+                waveIn.StopRecording();
+                waveIn.Dispose();
+            }
+        }
+
+        private void start_streaming_btn_Resize(object sender, EventArgs e)
+        {
+            // Tính toán vị trí ngang trung tâm của PictureBox
+            int centerX = streaming_screen.Width / 2 + start_streaming_btn.Width / 2;
+
+            // Đặt button cách cạnh dưới của PictureBox (ví dụ: 10px)
+            int bottomY = streaming_screen.Bottom + 4;
+
+            // Cập nhật vị trí của button
+            start_streaming_btn.Location = new Point(centerX, bottomY);
         }
     }
 }

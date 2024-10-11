@@ -38,9 +38,13 @@
             // 
             // streaming_screen
             // 
-            this.streaming_screen.Location = new System.Drawing.Point(34, 12);
+            this.streaming_screen.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.streaming_screen.Location = new System.Drawing.Point(78, 12);
             this.streaming_screen.Name = "streaming_screen";
-            this.streaming_screen.Size = new System.Drawing.Size(736, 310);
+            this.streaming_screen.Size = new System.Drawing.Size(644, 310);
+            this.streaming_screen.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.streaming_screen.TabIndex = 0;
             this.streaming_screen.TabStop = false;
             this.streaming_screen.Click += new System.EventHandler(this.streaming_screen_Click);

@@ -35,14 +35,19 @@
             // 
             // streaming_screen
             // 
-            this.streaming_screen.Location = new System.Drawing.Point(12, 12);
+            this.streaming_screen.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.streaming_screen.Location = new System.Drawing.Point(108, 41);
             this.streaming_screen.Name = "streaming_screen";
-            this.streaming_screen.Size = new System.Drawing.Size(776, 299);
+            this.streaming_screen.Size = new System.Drawing.Size(605, 299);
+            this.streaming_screen.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.streaming_screen.TabIndex = 0;
             this.streaming_screen.TabStop = false;
             // 
             // start_streaming_btn
             // 
+            this.start_streaming_btn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.start_streaming_btn.Location = new System.Drawing.Point(340, 367);
             this.start_streaming_btn.Name = "start_streaming_btn";
             this.start_streaming_btn.Size = new System.Drawing.Size(118, 44);
@@ -50,6 +55,7 @@
             this.start_streaming_btn.Text = "Start Streaming";
             this.start_streaming_btn.UseVisualStyleBackColor = true;
             this.start_streaming_btn.Click += new System.EventHandler(this.start_streaming_btn_Click);
+            this.start_streaming_btn.Resize += new System.EventHandler(this.start_streaming_btn_Resize);
             // 
             // Server_Form
             // 
