@@ -30,8 +30,7 @@ namespace Network_Project
         private IPEndPoint clientEndPoint;
         public Server_Form()
         {
-            IPAddress[] addresses = Dns.GetHostAddresses(Dns.GetHostName());
-            IPAddress localAddress = addresses.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            IPAddress localAddress = GetLocalIPAddress(); //Hàm lấy địa chỉ IP
             InitializeComponent();
             udpServer = new UdpClient();
             udpAudioServer = new UdpClient();
@@ -72,21 +71,34 @@ namespace Network_Project
 
         private void videoSource_NewFrame(object sender, NewFrameEventArgs e)
         {
+            if(e.Frame == null)
+            {
+                return; //bỏ qua quá trình nếu frame là null
+            }
             Bitmap bitmap = (Bitmap)e.Frame.Clone();
 
             // Chuyển đổi hình ảnh thành byte[]
             using (var ms = new System.IO.MemoryStream())
             {
-                bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
-                byte[] data = ms.ToArray();
-                //Chia nhỏ dữ liệu (do báo lỗi của chương trình trước đó)
-                const int maxUdpPacketSize = 65000;
-                for(int offset = 0; offset < data.Length; offset += maxUdpPacketSize)
+                try
                 {
-                    int size = Math.Min(maxUdpPacketSize, data.Length - offset);
-                    byte[] packet = new byte[size];
-                    Array.Copy(data, offset, packet, 0, size);
-                    udpServer.Send(packet, packet.Length, clientEndPoint);
+                    bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    byte[] data = ms.ToArray();
+                    //Chia nhỏ dữ liệu (do báo lỗi của chương trình trước đó)
+                    const int maxUdpPacketSize = 65000;
+                    for (int offset = 0; offset < data.Length; offset += maxUdpPacketSize)
+                    {
+                        int size = Math.Min(maxUdpPacketSize, data.Length - offset);
+                        byte[] packet = new byte[size];
+                        Array.Copy(data, offset, packet, 0, size);
+                        udpServer.Send(packet, packet.Length, clientEndPoint);
+                    }
+                    byte[] market = { 255, 255, 255, 255 };
+                    udpServer.Send(market, market.Length, clientEndPoint);
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show($"Error while processing frame: {ex.Message}");
                 }
 
                 // Gửi dữ liệu qua UDP
@@ -94,6 +106,10 @@ namespace Network_Project
             }
 
             // Hiển thị video lên PictureBox
+            if(streaming_screen.Image != null)
+            {
+                streaming_screen.Image.Dispose();
+            }
             streaming_screen.Image = bitmap;
         }
 
@@ -115,16 +131,29 @@ namespace Network_Project
             }
         }
 
+        private IPAddress GetLocalIPAddress()
+        {
+            var networkInterfaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
+            foreach (var networkInterface in networkInterfaces)
+            {
+                if (networkInterface.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211 &&
+                    networkInterface.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up)
+                {
+                    var ipProperties = networkInterface.GetIPProperties();
+                    foreach (var ip in ipProperties.UnicastAddresses)
+                    {
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            return ip.Address;
+                        }
+                    }
+                }
+            }
+            throw new Exception("Không tìm thấy địa chỉ IP Wi-Fi.");
+        }
+
         private void start_streaming_btn_Resize(object sender, EventArgs e)
         {
-            // Tính toán vị trí ngang trung tâm của PictureBox
-            int centerX = streaming_screen.Width / 2 + start_streaming_btn.Width / 2;
-
-            // Đặt button cách cạnh dưới của PictureBox (ví dụ: 10px)
-            int bottomY = streaming_screen.Bottom + 4;
-
-            // Cập nhật vị trí của button
-            start_streaming_btn.Location = new Point(centerX, bottomY);
         }
     }
 }
